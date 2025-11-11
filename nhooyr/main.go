@@ -4,26 +4,36 @@ import (
 	"log"
 	"net/http"
 
-	"websocket-nhooyr/internal/websocket"
+	ws "websocket-nhooyr/internal/websocket"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	router := gin.Default()
-	hub := websocket.NewHub()
+	hub := ws.NewHub()
 	go hub.Run()
 
-	router.GET("/ws", func(c *gin.Context) {
-		websocket.ServeWs(hub, c.Writer, c.Request)
-	})
+	router := gin.Default()
 
+	// Route biasa pakai Gin
 	router.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "WebSocket server (nhooyr.io) is running 🚀")
+		c.String(http.StatusOK, "✅ WebSocket server is running 🚀")
 	})
 
-	log.Println("Server running on :8081")
-	if err := router.Run(":8081"); err != nil {
-		log.Fatal("Server error:", err)
+	// Buat HTTP multiplexer (gabungkan Gin dan WS)
+	mux := http.NewServeMux()
+	mux.Handle("/", router) // semua route Gin
+	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		ws.ServeWs(hub, w, r)
+	})
+
+	server := &http.Server{
+		Addr:    ":8081",
+		Handler: mux,
+	}
+
+	log.Println("🚀 Server running on :8081")
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatal(err)
 	}
 }

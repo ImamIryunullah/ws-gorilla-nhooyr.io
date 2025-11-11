@@ -3,8 +3,9 @@ package websocket
 import (
 	"context"
 	"log"
+	"time"
 
-	"github.com/coder/websocket"
+	"nhooyr.io/websocket"
 )
 
 type Client struct {
@@ -16,33 +17,50 @@ type Client struct {
 func (c *Client) ReadPump(ctx context.Context) {
 	defer func() {
 		c.hub.unregister <- c
-		c.conn.Close(websocket.StatusNormalClosure, "closed")
+		c.conn.Close(websocket.StatusNormalClosure, "client disconnected")
+		log.Println("🔴 Client disconnected, total:", len(c.hub.clients))
 	}()
 
 	for {
-		_, message, err := c.conn.Read(ctx)
+		_, msg, err := c.conn.Read(ctx)
 		if err != nil {
-			log.Println("read:", err)
-			break
+			if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+				websocket.CloseStatus(err) == websocket.StatusGoingAway {
+				// normal closure
+				return
+			}
+			log.Println("read error:", err)
+			return
 		}
-		c.hub.broadcast <- message
+		c.hub.broadcast <- msg
 	}
 }
 
 func (c *Client) WritePump(ctx context.Context) {
-	defer c.conn.Close(websocket.StatusNormalClosure, "closed")
+	defer func() {
+		c.conn.Close(websocket.StatusNormalClosure, "write pump closed")
+	}()
 
 	for {
 		select {
-		case message, ok := <-c.send:
+		case msg, ok := <-c.send:
 			if !ok {
+				// hub closed the channel
+				c.conn.Close(websocket.StatusNormalClosure, "send channel closed")
 				return
 			}
-			err := c.conn.Write(ctx, websocket.MessageText, message)
+
+			writeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			err := c.conn.Write(writeCtx, websocket.MessageText, msg)
+			cancel()
+
 			if err != nil {
-				log.Println("write:", err)
+				log.Println("write error:", err)
 				return
 			}
+
+		case <-ctx.Done():
+			return
 		}
 	}
 }

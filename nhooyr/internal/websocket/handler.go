@@ -5,12 +5,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/coder/websocket"
+	"nhooyr.io/websocket"
 )
 
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: true, // biar Origin null tidak masalah
 	})
 	if err != nil {
 		log.Println("Upgrade error:", err)
@@ -22,12 +22,12 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		conn: conn,
 		send: make(chan []byte, 256),
 	}
+
 	hub.register <- client
 
-	// Context tidak dibatasi 1 jam, supaya broadcast tetap aktif
+	// ❗ gunakan context.Background() agar koneksi tetap hidup
 	ctx := context.Background()
 
-	// Jalankan dua goroutine: write & read
 	go client.WritePump(ctx)
 	go client.ReadPump(ctx)
 }

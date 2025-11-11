@@ -1,7 +1,5 @@
 package websocket
 
-import "log"
-
 type Hub struct {
 	clients    map[*Client]bool
 	broadcast  chan []byte
@@ -23,20 +21,19 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
-			log.Println("🟢 Client terdaftar, total:", len(h.clients))
+			println("🟢 Client connected, total:", len(h.clients))
 
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
-				log.Println("🔴 Client keluar, total:", len(h.clients))
+				println("🔴 Client disconnected, total:", len(h.clients))
 			}
 
-		case message := <-h.broadcast:
-			log.Printf("📡 Broadcast pesan: %s ke %d client(s)\n", string(message), len(h.clients))
+		case msg := <-h.broadcast:
 			for client := range h.clients {
 				select {
-				case client.send <- message:
+				case client.send <- msg:
 				default:
 					close(client.send)
 					delete(h.clients, client)
