@@ -1,40 +1,96 @@
 import ws from "k6/ws";
 import { check } from "k6";
-import { Trend } from "k6/metrics";
+import { Trend, Counter, Rate } from "k6/metrics";
 
-let latency = new Trend("latency");
+// Existing metrics
+let latency = new Trend("latency", true); // true = collect pXX
+let messages_sent = new Counter("messages_sent");
+let messages_received = new Counter("messages_received");
+let connection_errors = new Counter("connection_errors");
+let message_errors = new Counter("message_errors");
+let success_rate = new Rate("success_rate");
+
+// 🔥 New metrics
+let connect_time = new Trend("connect_time");
+let disconnect_time = new Trend("disconnect_time");
+let ping_rtt = new Trend("ping_rtt");
+let vu_active = new Counter("vu_active");
+let vu_completed = new Counter("vu_completed");
+let unexpected_close = new Counter("unexpected_close");
+let message_size = new Trend("message_size");
+
+// Custom metrics for throughput
+let throughput = new Trend("throughput");
 
 export const options = {
-  vus: 2000, // jumlah virtual user
-  duration: "30s", // durasi test
+  vus: 1000,
+  duration: "60s",
+  thresholds: {
+    // Tambahkan threshold untuk P99 latency
+    latency: ["p(99)<500"], // P99 latency harus <500ms
+    messages_received: ["count>0"],
+  },
 };
 
 export default function () {
-  const url = "ws://localhost:8081/ws";
+  const url = "wss://websocket.pollacheialnetworks.my.id/nhooyr";
+  const connectStart = Date.now();
 
   const res = ws.connect(url, {}, function (socket) {
-    let start = 0; // deklarasi di luar event supaya bisa diakses semua handler
+    vu_active.add(1);
 
-    socket.on("open", function () {
+    let start = 0;
+
+    socket.on("open", () => {
+      connect_time.add(Date.now() - connectStart);
+
       start = Date.now();
       socket.send("ping");
+      messages_sent.add(1);
     });
 
-    socket.on("message", function (message) {
+    socket.on("message", (message) => {
       let end = Date.now();
-      latency.add(end - start);
-      // Bisa log kalau mau lihat sample:
-      // console.log(`Latency: ${end - start}ms, msg: ${message}`);
-    });
+      let rtt = end - start;
 
-    socket.on("close", function () {
-      // koneksi tertutup
-    });
+      latency.add(rtt);
+      ping_rtt.add(rtt);
 
-    socket.setTimeout(function () {
+      if (!message) {
+        message_errors.add(1);
+      } else {
+        messages_received.add(1);
+        message_size.add(message.length);
+      }
+
+      // Hitung throughput sebagai pesan per detik
+      throughput.add(
+        messages_received.value / ((Date.now() - connectStart) / 1000)
+      );
+
+      success_rate.add(1);
+
+      vu_completed.add(1);
       socket.close();
-    }, 5000);
+    });
+
+    socket.on("error", (e) => {
+      connection_errors.add(1);
+      success_rate.add(0);
+    });
+
+    socket.on("close", () => {
+      disconnect_time.add(Date.now() - start);
+
+      if (messages_received.value === 0) {
+        unexpected_close.add(1);
+      }
+    });
+
+    // fallback force close
+    socket.setTimeout(() => socket.close(), 5000);
   });
 
-  check(res, { "status is 101": (r) => r && r.status === 101 });
+  check(res, { "status is 101": (r) => r && r.status === 101 }) ||
+    connection_errors.add(1);
 }

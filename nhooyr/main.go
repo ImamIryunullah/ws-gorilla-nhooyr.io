@@ -23,7 +23,7 @@ func main() {
 	// Buat HTTP multiplexer (gabungkan Gin dan WS)
 	mux := http.NewServeMux()
 	mux.Handle("/", router) // semua route Gin
-	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/nhooyr", func(w http.ResponseWriter, r *http.Request) {
 		ws.ServeWs(hub, w, r)
 	})
 
