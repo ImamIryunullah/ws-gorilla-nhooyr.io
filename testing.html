@@ -1,179 +1,191 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebSocket Test - Gorilla & Nhooyr</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: #f1f5f9;
-        margin: 0;
-        padding: 20px;
-      }
-      h1 {
-        text-align: center;
-        color: #1e3a8a;
-        margin-bottom: 20px;
-      }
-      .container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
-      }
-      .panel {
-        background: white;
-        border-radius: 10px;
-        padding: 20px;
-        width: 420px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-      .panel h2 {
-        color: #2563eb;
-        margin-top: 0;
-      }
-      .log {
-        border: 1px solid #cbd5e1;
-        background: #f8fafc;
-        padding: 10px;
-        height: 250px;
-        overflow-y: auto;
-        border-radius: 8px;
-        margin-top: 10px;
-      }
-      button {
-        background-color: #2563eb;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-        margin-right: 5px;
-      }
-      button:hover {
-        background-color: #1d4ed8;
-      }
-      input {
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #cbd5e1;
-        width: 60%;
-      }
-      .controls {
-        margin-top: 10px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>WebSocket Dual Test (Gorilla & Nhooyr)</h1>
-    <div class="container">
-      <!-- Panel Gorilla -->
-      <div class="panel" id="gorillaPanel">
-        <h2>🐵 Gorilla WebSocket (ws://localhost:8080/ws)</h2>
-        <div class="controls">
-          <button id="gConnect">Hubungkan</button>
-          <button id="gDisconnect" disabled>Matikan</button>
-        </div>
-        <div class="controls">
-          <input id="gMessage" placeholder="Ketik pesan..." />
-          <button id="gSend" disabled>Kirim</button>
-        </div>
-        <div class="log" id="gLog"></div>
-      </div>
 
-      <!-- Panel Nhooyr -->
-      <div class="panel" id="nhooyrPanel">
-        <h2>🦉 Nhooyr WebSocket (ws://localhost:8081/ws)</h2>
-        <div class="controls">
-          <button id="nConnect">Hubungkan</button>
-          <button id="nDisconnect" disabled>Matikan</button>
-        </div>
-        <div class="controls">
-          <input id="nMessage" placeholder="Ketik pesan..." />
-          <button id="nSend" disabled>Kirim</button>
-        </div>
-        <div class="log" id="nLog"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebSocket Test - Gorilla & Nhooyr</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1e3a8a;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      width: 420px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .panel h2 {
+      color: #2563eb;
+      margin-top: 0;
+    }
+
+    .log {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      padding: 10px;
+      height: 250px;
+      overflow-y: auto;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+
+    button:hover {
+      background-color: #1d4ed8;
+    }
+
+    input {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      width: 60%;
+    }
+
+    .controls {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>WebSocket Dual Test (Gorilla & Nhooyr)</h1>
+  <div class="container">
+    <!-- Panel Gorilla -->
+    <div class="panel" id="gorillaPanel">
+      <h2>🐵 Gorilla WebSocket (ws://localhost:8080/ws)</h2>
+      <div class="controls">
+        <button id="gConnect">Hubungkan</button>
+        <button id="gDisconnect" disabled>Matikan</button>
       </div>
+      <div class="controls">
+        <input id="gMessage" placeholder="Ketik pesan..." />
+        <button id="gSend" disabled>Kirim</button>
+      </div>
+      <div class="log" id="gLog"></div>
     </div>
 
-    <script>
-      // Helper log
-      const makeLogger = (id) => (msg) => {
-        const div = document.createElement("div");
-        div.textContent = msg;
-        const logEl = document.getElementById(id);
-        logEl.appendChild(div);
-        logEl.scrollTop = logEl.scrollHeight;
+    <!-- Panel Nhooyr -->
+    <div class="panel" id="nhooyrPanel">
+      <h2>🦉 Nhooyr WebSocket (ws://localhost:8081/ws)</h2>
+      <div class="controls">
+        <button id="nConnect">Hubungkan</button>
+        <button id="nDisconnect" disabled>Matikan</button>
+      </div>
+      <div class="controls">
+        <input id="nMessage" placeholder="Ketik pesan..." />
+        <button id="nSend" disabled>Kirim</button>
+      </div>
+      <div class="log" id="nLog"></div>
+    </div>
+  </div>
+
+  <script>
+    // Helper log
+    const makeLogger = (id) => (msg) => {
+      const div = document.createElement("div");
+      div.textContent = msg;
+      const logEl = document.getElementById(id);
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+
+    // ====== Gorilla WS ======
+    let gws;
+    const gLog = makeLogger("gLog");
+
+    document.getElementById("gConnect").onclick = () => {
+      gws = new WebSocket("wss://websocket.pollacheialnetworks.my.id/gorilla");
+      gws.onopen = () => {
+        gLog("✅ Connected to Gorilla server");
+        gToggle(true);
       };
-
-      // ====== Gorilla WS ======
-      let gws;
-      const gLog = makeLogger("gLog");
-
-      document.getElementById("gConnect").onclick = () => {
-        gws = new WebSocket("ws://localhost:8080/ws");
-        gws.onopen = () => {
-          gLog("✅ Connected to Gorilla server");
-          gToggle(true);
-        };
-        gws.onmessage = (e) => gLog("📩 Server: " + e.data);
-        gws.onclose = () => {
-          gLog("❌ Disconnected");
-          gToggle(false);
-        };
-        gws.onerror = (e) => gLog("⚠️ Error: " + e.message);
+      gws.onmessage = (e) => gLog("📩 Server: " + e.data);
+      gws.onclose = () => {
+        gLog("❌ Disconnected");
+        gToggle(false);
       };
+      gws.onerror = (e) => gLog("⚠️ Error: " + e.message);
+    };
 
-      document.getElementById("gDisconnect").onclick = () => gws?.close();
-      document.getElementById("gSend").onclick = () => {
-        const msg = document.getElementById("gMessage").value;
-        if (msg.trim() !== "") {
-          gws.send(msg);
-          gLog("🧑‍💻 You: " + msg);
-          document.getElementById("gMessage").value = "";
-        }
+    document.getElementById("gDisconnect").onclick = () => gws?.close();
+    document.getElementById("gSend").onclick = () => {
+      const msg = document.getElementById("gMessage").value;
+      if (msg.trim() !== "") {
+        gws.send(msg);
+        gLog("🧑‍💻 You: " + msg);
+        document.getElementById("gMessage").value = "";
+      }
+    };
+
+    const gToggle = (connected) => {
+      document.getElementById("gConnect").disabled = connected;
+      document.getElementById("gDisconnect").disabled = !connected;
+      document.getElementById("gSend").disabled = !connected;
+    };
+
+    // ====== Nhooyr WS ======
+    let nws;
+    const nLog = makeLogger("nLog");
+
+    document.getElementById("nConnect").onclick = () => {
+      nws = new WebSocket("wss://websocket.pollacheialnetworks.my.id/nhooyr");
+      nws.onopen = () => {
+        nLog("✅ Connected to Nhooyr server");
+        nToggle(true);
       };
-
-      const gToggle = (connected) => {
-        document.getElementById("gConnect").disabled = connected;
-        document.getElementById("gDisconnect").disabled = !connected;
-        document.getElementById("gSend").disabled = !connected;
+      nws.onmessage = (e) => nLog("📩 Server: " + e.data);
+      nws.onclose = () => {
+        nLog("❌ Disconnected");
+        nToggle(false);
       };
+      nws.onerror = (e) => nLog("⚠️ Error: " + e.message);
+    };
 
-      // ====== Nhooyr WS ======
-      let nws;
-      const nLog = makeLogger("nLog");
+    document.getElementById("nDisconnect").onclick = () => nws?.close();
+    document.getElementById("nSend").onclick = () => {
+      const msg = document.getElementById("nMessage").value;
+      if (msg.trim() !== "") {
+        nws.send(msg);
+        nLog("🧑‍💻 You: " + msg);
+        document.getElementById("nMessage").value = "";
+      }
+    };
 
-      document.getElementById("nConnect").onclick = () => {
-        nws = new WebSocket("ws://localhost:8081/ws");
-        nws.onopen = () => {
-          nLog("✅ Connected to Nhooyr server");
-          nToggle(true);
-        };
-        nws.onmessage = (e) => nLog("📩 Server: " + e.data);
-        nws.onclose = () => {
-          nLog("❌ Disconnected");
-          nToggle(false);
-        };
-        nws.onerror = (e) => nLog("⚠️ Error: " + e.message);
-      };
+    const nToggle = (connected) => {
+      document.getElementById("nConnect").disabled = connected;
+      document.getElementById("nDisconnect").disabled = !connected;
+      document.getElementById("nSend").disabled = !connected;
+    };
+  </script>
+</body>
 
-      document.getElementById("nDisconnect").onclick = () => nws?.close();
-      document.getElementById("nSend").onclick = () => {
-        const msg = document.getElementById("nMessage").value;
-        if (msg.trim() !== "") {
-          nws.send(msg);
-          nLog("🧑‍💻 You: " + msg);
-          document.getElementById("nMessage").value = "";
-        }
-      };
-
-      const nToggle = (connected) => {
-        document.getElementById("nConnect").disabled = connected;
-        document.getElementById("nDisconnect").disabled = !connected;
-        document.getElementById("nSend").disabled = !connected;
-      };
-    </script>
-  </body>
 </html>

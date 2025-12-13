@@ -15,7 +15,7 @@ func main() {
 	hub := websocket.NewHub()
 	go hub.Run()
 
-	router.GET("/ws", func(c *gin.Context) {
+	router.GET("/gorilla", func(c *gin.Context) {
 		websocket.ServeWs(hub, c.Writer, c.Request)
 	})
 
