@@ -23,7 +23,7 @@ let message_size = new Trend("message_size");
 let throughput = new Trend("throughput");
 
 export const options = {
-  vus: 1000,
+  vus: 5000,
   duration: "60s",
   thresholds: {
     // Tambahkan threshold untuk P99 latency
