@@ -10,7 +10,7 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[*Client]bool),
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan []byte, 1024), // ✅ buffered hub channel
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
@@ -21,13 +21,13 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
-			println("🟢 Client connected, total:", len(h.clients))
+			// println("🟢 Client connected, total:", len(h.clients)) // ✅ minimal logging
 
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
-				println("🔴 Client disconnected, total:", len(h.clients))
+				// println("🔴 Client disconnected, total:", len(h.clients))
 			}
 
 		case msg := <-h.broadcast:
@@ -35,8 +35,7 @@ func (h *Hub) Run() {
 				select {
 				case client.send <- msg:
 				default:
-					close(client.send)
-					delete(h.clients, client)
+					// ✅ drop message instead of closing client
 				}
 			}
 		}

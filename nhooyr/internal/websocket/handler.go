@@ -10,7 +10,8 @@ import (
 
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true, // biar Origin null tidak masalah
+		InsecureSkipVerify: true,
+		CompressionMode:    websocket.CompressionContextTakeover, // ✅ compress messages
 	})
 	if err != nil {
 		log.Println("Upgrade error:", err)
@@ -20,14 +21,12 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{
 		hub:  hub,
 		conn: conn,
-		send: make(chan []byte, 256),
+		send: make(chan []byte, 512), // ✅ buffer lebih besar
 	}
 
 	hub.register <- client
 
-	// ❗ gunakan context.Background() agar koneksi tetap hidup
 	ctx := context.Background()
-
 	go client.WritePump(ctx)
 	go client.ReadPump(ctx)
 }

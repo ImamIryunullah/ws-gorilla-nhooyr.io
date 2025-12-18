@@ -15,14 +15,12 @@ func main() {
 
 	router := gin.Default()
 
-	// Route biasa pakai Gin
 	router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "✅ WebSocket server is running 🚀")
 	})
 
-	// Buat HTTP multiplexer (gabungkan Gin dan WS)
 	mux := http.NewServeMux()
-	mux.Handle("/", router) // semua route Gin
+	mux.Handle("/", router)
 	mux.HandleFunc("/nhooyr", func(w http.ResponseWriter, r *http.Request) {
 		ws.ServeWs(hub, w, r)
 	})

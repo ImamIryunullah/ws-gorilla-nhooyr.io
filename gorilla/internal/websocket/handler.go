@@ -6,11 +6,22 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// sebelum optimasi
+// var upgrader = websocket.Upgrader{
+// 	ReadBufferSize:  1024,
+// 	WriteBufferSize: 1024,
+// 	CheckOrigin: func(r *http.Request) bool {
+// 		return true
+// 	},
+// }
+
+// sesudah optimasi lanjut
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:    4096,
+	WriteBufferSize:   4096,
+	EnableCompression: true,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // izinkan semua origin (untuk pengujian)
+		return true
 	},
 }
 
@@ -20,7 +31,12 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{
+		hub:  hub,
+		conn: conn,
+		send: make(chan []byte, 512), // sesudah optimasi lanjut: channel lebih besar
+	}
+
 	hub.register <- client
 
 	go client.WritePump()

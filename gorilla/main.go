@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+	log.Println("WS Gorilla Optimized | Hub & Pump tuning + Worker Pool")
+
 	router := gin.Default()
 
 	hub := websocket.NewHub()
