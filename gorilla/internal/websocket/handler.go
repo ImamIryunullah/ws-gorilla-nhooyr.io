@@ -15,7 +15,7 @@ import (
 // 	},
 // }
 
-// sesudah optimasi lanjut
+// sesudah optimasi
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:    4096,
 	WriteBufferSize:   4096,
@@ -31,12 +31,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &Client{
-		hub:  hub,
-		conn: conn,
-		send: make(chan []byte, 512), // sesudah optimasi lanjut: channel lebih besar
-	}
-
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	hub.register <- client
 
 	go client.WritePump()

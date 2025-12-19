@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	log.Println("WS Gorilla Optimized | Hub & Pump tuning + Worker Pool")
+	log.Println("WS Gorilla Optimized | Hub & Pump tuning")
 
 	router := gin.Default()
 

@@ -7,10 +7,9 @@ import (
 )
 
 type Client struct {
-	hub       *Hub
-	conn      *websocket.Conn
-	send      chan []byte
-	dropCount int // sesudah optimasi lanjut: track drop message
+	hub  *Hub
+	conn *websocket.Conn
+	send chan []byte
 }
 
 // ======================
@@ -31,7 +30,7 @@ func (c *Client) ReadPump() {
 	// 	c.hub.broadcast <- message
 	// }
 
-	// sesudah optimasi lanjut
+	// sesudah optimasi
 	c.conn.SetReadLimit(512)
 	c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	c.conn.SetPongHandler(func(string) error {
@@ -58,8 +57,18 @@ func (c *Client) WritePump() {
 		c.conn.Close()
 	}()
 
-	batch := make([][]byte, 0, 10) // sesudah optimasi lanjut: batch message
+	// sebelum optimasi
+	// defer c.conn.Close()
+	// for {
+	// 	message, ok := <-c.send
+	// 	if !ok {
+	// 		c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+	// 		return
+	// 	}
+	// 	c.conn.WriteMessage(websocket.TextMessage, message)
+	// }
 
+	// sesudah optimasi
 	for {
 		select {
 		case message, ok := <-c.send:
@@ -67,25 +76,15 @@ func (c *Client) WritePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-
-			// batch message
-			batch = append(batch, message)
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+				return
+			}
 		case <-ticker.C:
-			if len(batch) == 0 {
-				c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-				if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-					return
-				}
-				continue
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
 			}
-
-			for _, msg := range batch {
-				c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-				if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-					return
-				}
-			}
-			batch = batch[:0] // reset batch
 		}
 	}
 }
